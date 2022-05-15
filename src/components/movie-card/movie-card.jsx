@@ -1,13 +1,32 @@
 import React from 'react';
-import { render } from 'react-dom/cjs/react-dom.production.min';
+import PropTypes from 'prop-types';
 
-export class MovieCard extends React.Components {
-   render() {
-    const {movie, onMovieClick} = this.props;
-    return <div className='movie-card' onClick={()=>{onMovieClick(movie);}}>{movie.Title}</div>
+export class MovieCard extends React.Component {
+  render() {
+    const { movie, onMovieClick } = this.props;
 
-   /* if (movies.lentgh === 0) return <div className= "main-view">
-        {movies.map(movie => <MovieCard key={movie._id} movie={movie} onMovieclick={newSelectedMovie => {this.setState({selectedMovie: newSelectedMovie});}} />)}
-    </div>*/
-}}
+    return (
+      <div onClick={() => onMovieClick(movie)} className="movie-card">{movie.Title}</div>
+    );
+  }
+}
+
+MovieCard.propTypes = {
+  movie: PropTypes.shape({
+    Title: PropTypes.string.isRequired,
+    Description: PropTypes.string.isRequired,
+    Director: PropTypes.string.shape({
+      Name: {},
+      Bio: {},
+      Birth: {}
+    }),
+    Genre: PropTypes.shape({
+      Name: {},
+      Description: {}
+    }),
+    ImagePath: PropTypes.string.isRequired,
+   
+  }).isRequired,
+  onMovieClick: PropTypes.func.isRequired
+};
 
