@@ -13,6 +13,7 @@ export class MainView extends React.Component {
         };
     }    
 
+
     componentDidMount(){
       axios.get('http://fabiflix.herokuapp.com/moviess')
       .then(response => { this.setState({movies: response.data}); })
@@ -26,7 +27,20 @@ export class MainView extends React.Component {
         });
       }
     
+<<<<<<< Updated upstream
 
+=======
+    onLoggedIn(user) {
+      console.log(authData);
+      this.setState({
+        user: authData.user.Username
+      });
+
+      localStorage.setItem('token', authData.token),
+      localStorage.setItem('user', authData.user.Username);
+      this.getMovies(authData.token);
+    }
+>>>>>>> Stashed changes
 
     render() {
         const { movies, selectedMovie } = this.state;
@@ -35,14 +49,31 @@ export class MainView extends React.Component {
         if (movies.length === 0) return <div className="main-view" />
     
         return (
+        <Container>
           <div className="main-view">
             {selectedMovie
-              ? <MovieView movie={selectedMovie} onBackClick={newSelectedMovie => { this.setSelectedMovie(newSelectedMovie); }}/>
-              : movies.map(movie => (
+              ?(
+              <Row className="justify-content-md-center"> 
+                <Col md={8}>
+                  <MovieView movie={selectedMovie} onBackClick={newSelectedMovie => { this.setSelectedMovie(newSelectedMovie); }}/>
+                </Col>
+              </Row>
+              )
+              
+              : (
+                <Row className="justify-content-md-center">
+              {movies.map(movie => (
+                <Col md={3}>
                 <MovieCard key={movie._id} movie={movie} onMovieClick={(newSelectedMovie) => { this.setSelectedMovie(newSelectedMovie) }}/>
-              ))
+                </Col>
+              )
+              )
+            }
+            </Row>
+              )
             }
           </div>
+        </Container>
         );
       }
     
