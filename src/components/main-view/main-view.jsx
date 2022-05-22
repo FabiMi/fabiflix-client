@@ -19,12 +19,33 @@ export class MainView extends React.Component {
 
     
 
+    // src/components/main-view/main-view.jsx
+getMovies(token) {
+  axios.get('YOUR_API_URL/movies', {
+    headers: { Authorization: `Bearer ${token}`}
+  })
+  .then(response => {
+    // Assign the result to the state
+    this.setState({
+      movies: response.data
+    });
+  })
+  .catch(function (error) {
+    console.log(error);
+  });
+}
 
-    componentDidMount(){
-      axios.get('http://fabiflix.herokuapp.com/moviess')
-      .then(response => { this.setState({movies: response.data}); })
-    .catch(error => {console.log(error);
-   });
+    
+
+
+    componentDidMount() {
+      let accessToken = localStorage.getItem('token');
+      if (accessToken !== null) {
+        this.setState({
+          user: localStorage.getItem('user')
+        });
+        this.getMovies(accessToken);
+      }
     }
 
     setSelectedMovie(newSelectedMovie) {
@@ -32,7 +53,16 @@ export class MainView extends React.Component {
           selectedMovie: newSelectedMovie
         });
       }
-    
+      onLoggedIn(authData) {
+        console.log(authData);
+        this.setState({
+          user: authData.user.Username
+        });
+      
+        localStorage.setItem('token', authData.token);
+        localStorage.setItem('user', authData.user.Username);
+        this.getMovies(authData.token);
+      }
 
     render() {
         const { movies, selectedMovie } = this.state;
