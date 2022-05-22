@@ -1,7 +1,11 @@
 import React from 'react';
 import axios from 'axios';
+import { BrowserRouter as Router, Route } from "react-router-dom";
 import {MovieCard} from  './src/components/movie-card/movie-card.jsx';
 import {MovieView} from  './src/components/movie-view/movie-view.jsx';
+import { LoginView } from '../login-view/login-view';
+import { RegistrationView } from '../registration-view/registration-view';
+
 
 export class MainView extends React.Component {
 
@@ -12,6 +16,8 @@ export class MainView extends React.Component {
           selectedMovie: null
         };
     }    
+
+    
 
 
     componentDidMount(){
@@ -27,20 +33,6 @@ export class MainView extends React.Component {
         });
       }
     
-<<<<<<< Updated upstream
-
-=======
-    onLoggedIn(user) {
-      console.log(authData);
-      this.setState({
-        user: authData.user.Username
-      });
-
-      localStorage.setItem('token', authData.token),
-      localStorage.setItem('user', authData.user.Username);
-      this.getMovies(authData.token);
-    }
->>>>>>> Stashed changes
 
     render() {
         const { movies, selectedMovie } = this.state;
