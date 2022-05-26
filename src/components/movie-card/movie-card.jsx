@@ -1,7 +1,8 @@
 import React from 'react';
 import { render } from 'react-dom/cjs/react-dom.production.min';
+import PropTypes from 'prop-types';
 
-export class MovieCard extends React.Components {
+export class MovieCard extends React.Component {
    render() {
     const {movie, onMovieClick} = this.props;
    
@@ -19,11 +20,11 @@ export class MovieCard extends React.Components {
   }
 }
 
-MovieCard.propTypes = {
+MovieCard.PropTypes = {
   movie: PropTypes.shape({
     Title: PropTypes.string.isRequired,
     Description: PropTypes.string.isRequired,
-    Director: PropTypes.string.shape({
+    Director: PropTypes.shape({
       Name: {},
       Bio: {},
       Birth: {}

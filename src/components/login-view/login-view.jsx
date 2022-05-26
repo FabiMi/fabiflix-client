@@ -11,7 +11,7 @@ export function LoginView(props) {
 
   //Hook for the inputs
    const [usernameErr, setUsernameErr] = useState('');
-   const [passwordErr, setPasswwordErr] = useState('');
+   const [passwordErr, setPasswordErr] = useState('');
 
     const validate = () => { let isReq = true; 
     if(!username){setUsernameErr('Username Required');
@@ -20,8 +20,8 @@ else if (username.length < 2){
   setUsernameErr('Username must be 2 charcters long');
   isReq = false;
 }
-if(!password) {setPasswwordErr('Password Required');
-isREq = false;}
+if(!password) {setPasswordErr('Password Required');
+isReq = false;}
 else if(password.length < 6) {
   setPassword('Password must be 6 Characters long');
   isReq = false;
@@ -58,8 +58,7 @@ return isReq;}
        <FormControl type="password" onChange={e => setPassword(e.target.value)} />
       </Form.Group>
       <Button variant="primary"  type="submit" onClick={handleSubmit}>Submit</Button>
-      <Button  variant="registrationView }}>Register</button>
-      
+      <Button  variant="registrationView">Register</Button>
     </Form>
   );
 }
