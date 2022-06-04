@@ -15,6 +15,7 @@ class MainView extends React.Component {
     constructor(){
         super();
         this.state = {
+          user: null,
           movies: [],
           selectedMovie: null
         };
@@ -68,12 +69,16 @@ getMovies(token) {
       }
 
     render() {
-        const { movies, selectedMovie } = this.state;
+        const { user, movies, selectedMovie } = this.state;
     
-          if(!user) return 
-          <Row><Col>
+          if (!user) {
+            return (
+              <Row><Col>
           <LoginView onLoggedIn={user => this.onLoggedIn(user)} />
           </Col></Row>
+            )
+          } 
+          
           if (movies.length === 0) return <div className="main-view" />;
     
         return (
@@ -111,4 +116,6 @@ getMovies(token) {
   }
 
     
-    }    
+    }
+    
+    export default MainView;

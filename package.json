@@ -2,8 +2,10 @@
   "name": "fabiflix-client",
   "version": "1.0.0",
   "description": "",
-  "entry": "src/index.html",
+  "source": "src/index.html",
   "scripts": {
+    "start": "parcel",
+    "build": "parcel build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -25,7 +27,9 @@
     "react-router-dom": "^5.3.0"
   },
   "devDependencies": {
-    "parcel": "2.5.0",
-    "sass": "^1.52.1"
+    "@parcel/transformer-sass": "^2.6.0",
+    "buffer": "^6.0.3",
+    "parcel": "^2.6.0",
+    "process": "^0.11.10"
   }
 }
