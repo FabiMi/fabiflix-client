@@ -1,14 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import MainView  from './components/main-view/main-view';
-import './index.scss';
 import Container from 'react-bootstrap/Container';
-
-
+import {MainView}  from './components/main-view/main-view';
+import './index.scss';
 
 class MyFlixApplication extends React.Component {
     render() {
-        return(
+        return (
             <Container>
                 <MainView />
             </Container>
@@ -16,7 +14,9 @@ class MyFlixApplication extends React.Component {
     }
 }
 
-const container = document.getElementsByClassName('app-container')[0];
+const container = document.getElementById('app-container');
+
+
 ReactDOM.render(React.createElement(MyFlixApplication), container);
 
 

@@ -10,7 +10,7 @@ import Col from 'react-bootstrap/Col';
 
 
 
-export class MainView extends React.Component {
+class MainView extends React.Component {
 
     constructor(){
         super();
@@ -24,7 +24,7 @@ export class MainView extends React.Component {
 
     // src/components/main-view/main-view.jsx
 getMovies(token) {
-  axios.get('YOUR_API_URL/movies', {
+  axios.get('https://fabiflix.herokuapp.com/movies', {
     headers: { Authorization: `Bearer ${token}`}
   })
   .then(response => {
@@ -95,6 +95,16 @@ getMovies(token) {
 }
 
  />
+//Probably different for me because i stored the Genres and Director in different libaries
+<Route path="/genres/:name" render={({ match }) => {
+  if (movies.length === 0) return <div className="main-view" />;
+  return <Col md={8}>
+    <GenreView genre={movies.find(m => m.Genre.Name === match.params.name).Genre} />
+  </Col>}
+}
+
+ />
+ 
 
    </Row>   </Router>
     );
