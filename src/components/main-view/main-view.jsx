@@ -3,6 +3,7 @@ import axios from 'axios';
 import { BrowserRouter as Router, Route } from "react-router-dom";
 import {MovieCard} from  '../movie-card/movie-card.jsx';
 import {MovieView} from  '../movie-view/movie-view.jsx';
+import {DirectorView} from '../director-view/director-view.jsx'
 import { LoginView } from '../login-view/login-view';
 import { RegistrationView } from '../registration-view/registration-view';
 import Row from 'react-bootstrap/Row';
