@@ -2503,7 +2503,7 @@ process.umask = function() {
     return 0;
 };
 
-},{}],"6fg2U":[function(require,module,exports) {
+},{}],"jVvJi":[function(require,module,exports) {
 "use strict";
 var global = arguments[3];
 var HMR_HOST = null;
@@ -2511,7 +2511,7 @@ var HMR_PORT = null;
 var HMR_SECURE = false;
 var HMR_ENV_HASH = "d6ea1d42532a7575";
 module.bundle.HMR_BUNDLE_ID = "022c1b16b4b6dfad";
-/* global HMR_HOST, HMR_PORT, HMR_ENV_HASH, HMR_SECURE, chrome, browser, importScripts */ /*::
+/* global HMR_HOST, HMR_PORT, HMR_ENV_HASH, HMR_SECURE, chrome, browser, globalThis, __parcel__import__, __parcel__importScripts__, ServiceWorkerGlobalScope */ /*::
 import type {
   HMRAsset,
   HMRMessage,
@@ -2541,6 +2541,8 @@ interface ParcelModule {
 interface ExtensionContext {
   runtime: {|
     reload(): void,
+    getURL(url: string): string;
+    getManifest(): {manifest_version: number, ...};
   |};
 }
 declare var module: {bundle: ParcelRequire, ...};
@@ -2550,6 +2552,10 @@ declare var HMR_ENV_HASH: string;
 declare var HMR_SECURE: boolean;
 declare var chrome: ExtensionContext;
 declare var browser: ExtensionContext;
+declare var __parcel__import__: (string) => Promise<void>;
+declare var __parcel__importScripts__: (string) => Promise<void>;
+declare var globalThis: typeof self;
+declare var ServiceWorkerGlobalScope: Object;
 */ var OVERLAY_ID = "__parcel__error__overlay__";
 var OldModule = module.bundle.Module;
 function Module(moduleName) {
@@ -2580,7 +2586,8 @@ if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== "undefined") {
     var hostname = getHostname();
     var port = getPort();
     var protocol = HMR_SECURE || location.protocol == "https:" && !/localhost|127.0.0.1|0.0.0.0/.test(hostname) ? "wss" : "ws";
-    var ws = new WebSocket(protocol + "://" + hostname + (port ? ":" + port : "") + "/"); // Safari doesn't support sourceURL in error stacks.
+    var ws = new WebSocket(protocol + "://" + hostname + (port ? ":" + port : "") + "/"); // Web extension context
+    var extCtx = typeof chrome === "undefined" ? typeof browser === "undefined" ? null : browser : chrome; // Safari doesn't support sourceURL in error stacks.
     // eval may also be disabled via CSP, so do a quick check.
     var supportsSourceURL = false;
     try {
@@ -2608,12 +2615,7 @@ if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== "undefined") {
                     var id = assetsToAccept[i][1];
                     if (!acceptedAssets[id]) hmrAcceptRun(assetsToAccept[i][0], id);
                 }
-            } else if ("reload" in location) location.reload();
-            else {
-                // Web extension context
-                var ext = typeof chrome === "undefined" ? typeof browser === "undefined" ? null : browser : chrome;
-                if (ext && ext.runtime && ext.runtime.reload) ext.runtime.reload();
-            }
+            } else fullReload();
         }
         if (data.type === "error") {
             // Log parcel errors to console
@@ -2670,6 +2672,10 @@ ${frame.code}`;
     overlay.innerHTML = errorHTML;
     return overlay;
 }
+function fullReload() {
+    if ("reload" in location) location.reload();
+    else if (extCtx && extCtx.runtime && extCtx.runtime.reload) extCtx.runtime.reload();
+}
 function getParents(bundle, id) /*: Array<[ParcelRequire, string]> */ {
     var modules = bundle.modules;
     if (!modules) return [];
@@ -2710,6 +2716,32 @@ function reloadCSS() {
         cssTimeout = null;
     }, 50);
 }
+function hmrDownload(asset) {
+    if (asset.type === "js") {
+        if (typeof document !== "undefined") {
+            let script = document.createElement("script");
+            script.src = asset.url + "?t=" + Date.now();
+            if (asset.outputFormat === "esmodule") script.type = "module";
+            return new Promise((resolve, reject)=>{
+                var _document$head;
+                script.onload = ()=>resolve(script);
+                script.onerror = reject;
+                (_document$head = document.head) === null || _document$head === void 0 || _document$head.appendChild(script);
+            });
+        } else if (typeof importScripts === "function") {
+            // Worker scripts
+            if (asset.outputFormat === "esmodule") return import(asset.url + "?t=" + Date.now());
+            else return new Promise((resolve, reject)=>{
+                try {
+                    importScripts(asset.url + "?t=" + Date.now());
+                    resolve();
+                } catch (err) {
+                    reject(err);
+                }
+            });
+        }
+    }
+}
 async function hmrApplyUpdates(assets) {
     global.parcelHotUpdate = Object.create(null);
     let scriptsToRemove;
@@ -2722,24 +2754,20 @@ async function hmrApplyUpdates(assets) {
         // This path is also taken if a CSP disallows eval.
         if (!supportsSourceURL) {
             let promises = assets.map((asset)=>{
-                if (asset.type === "js") {
-                    if (typeof document !== "undefined") {
-                        let script = document.createElement("script");
-                        script.src = asset.url;
-                        return new Promise((resolve, reject)=>{
-                            var _document$head;
-                            script.onload = ()=>resolve(script);
-                            script.onerror = reject;
-                            (_document$head = document.head) === null || _document$head === void 0 || _document$head.appendChild(script);
-                        });
-                    } else if (typeof importScripts === "function") return new Promise((resolve, reject)=>{
-                        try {
-                            importScripts(asset.url);
-                        } catch (err) {
-                            reject(err);
+                var _hmrDownload;
+                return (_hmrDownload = hmrDownload(asset)) === null || _hmrDownload === void 0 ? void 0 : _hmrDownload.catch((err)=>{
+                    // Web extension bugfix for Chromium
+                    // https://bugs.chromium.org/p/chromium/issues/detail?id=1255412#c12
+                    if (extCtx && extCtx.runtime && extCtx.runtime.getManifest().manifest_version == 3) {
+                        if (typeof ServiceWorkerGlobalScope != "undefined" && global instanceof ServiceWorkerGlobalScope) {
+                            extCtx.runtime.reload();
+                            return;
                         }
-                    });
-                }
+                        asset.url = extCtx.runtime.getURL("/__parcel_hmr_proxy__?url=" + encodeURIComponent(asset.url + "?t=" + Date.now()));
+                        return hmrDownload(asset);
+                    }
+                    throw err;
+                });
             });
             scriptsToRemove = await Promise.all(promises);
         }
@@ -2776,6 +2804,7 @@ function hmrApply(bundle, asset) {
             if (supportsSourceURL) // Global eval. We would use `new Function` here but browser
             // support for source maps is better with eval.
             (0, eval)(asset.output);
+             // $FlowFixMe
             let fn = global.parcelHotUpdate[asset.id];
             modules[asset.id] = [
                 fn,
@@ -25495,6 +25524,7 @@ var _axiosDefault = parcelHelpers.interopDefault(_axios);
 var _reactRouterDom = require("react-router-dom");
 var _movieCardJsx = require("../movie-card/movie-card.jsx");
 var _movieViewJsx = require("../movie-view/movie-view.jsx");
+var _directorViewJsx = require("../director-view/director-view.jsx");
 var _loginView = require("../login-view/login-view");
 var _registrationView = require("../registration-view/registration-view");
 var _row = require("react-bootstrap/Row");
@@ -25556,24 +25586,24 @@ class MainView extends (0, _reactDefault.default).Component {
                     onLoggedIn: (user)=>this.onLoggedIn(user)
                 }, void 0, false, {
                     fileName: "src/components/main-view/main-view.jsx",
-                    lineNumber: 77,
+                    lineNumber: 78,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "src/components/main-view/main-view.jsx",
-                lineNumber: 76,
+                lineNumber: 77,
                 columnNumber: 20
             }, this)
         }, void 0, false, {
             fileName: "src/components/main-view/main-view.jsx",
-            lineNumber: 76,
+            lineNumber: 77,
             columnNumber: 15
         }, this);
         if (movies.length === 0) return /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
             className: "main-view"
         }, void 0, false, {
             fileName: "src/components/main-view/main-view.jsx",
-            lineNumber: 82,
+            lineNumber: 83,
             columnNumber: 43
         }, this);
         return /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _reactRouterDom.BrowserRouter), {
@@ -25596,7 +25626,7 @@ class MainView extends (0, _reactDefault.default).Component {
                             }
                         }, void 0, false, {
                             fileName: "src/components/main-view/main-view.jsx",
-                            lineNumber: 88,
+                            lineNumber: 89,
                             columnNumber: 10
                         }, this),
                         /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _reactRouterDom.Route), {
@@ -25607,14 +25637,14 @@ class MainView extends (0, _reactDefault.default).Component {
                                 }, void 0, false, void 0, void 0);
                                 return /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _colDefault.default), {
                                     md: 8,
-                                    children: /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)(DirectorView, {
+                                    children: /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _directorViewJsx.DirectorView), {
                                         director: movies.find((m)=>m.Director.Name === match.params.name).Director
                                     }, void 0, false, void 0, void 0)
                                 }, void 0, false, void 0, void 0);
                             }
                         }, void 0, false, {
                             fileName: "src/components/main-view/main-view.jsx",
-                            lineNumber: 95,
+                            lineNumber: 96,
                             columnNumber: 10
                         }, this),
                         "//Probably different for me because i stored the Genres and Director in different libaries",
@@ -25633,20 +25663,20 @@ class MainView extends (0, _reactDefault.default).Component {
                             }
                         }, void 0, false, {
                             fileName: "src/components/main-view/main-view.jsx",
-                            lineNumber: 104,
+                            lineNumber: 105,
                             columnNumber: 1
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "src/components/main-view/main-view.jsx",
-                    lineNumber: 87,
+                    lineNumber: 88,
                     columnNumber: 9
                 }, this),
                 "   "
             ]
         }, void 0, true, {
             fileName: "src/components/main-view/main-view.jsx",
-            lineNumber: 86,
+            lineNumber: 87,
             columnNumber: 7
         }, this);
     }
@@ -25658,7 +25688,7 @@ exports.default = MainView;
   window.$RefreshReg$ = prevRefreshReg;
   window.$RefreshSig$ = prevRefreshSig;
 }
-},{"react/jsx-dev-runtime":"iTorj","react":"21dqq","axios":"jo6P5","react-router-dom":"cHIiW","../movie-card/movie-card.jsx":"bwuIu","../movie-view/movie-view.jsx":"ggaUx","../login-view/login-view":"9YtA0","../registration-view/registration-view":"3U8r7","react-bootstrap/Row":"cMC39","react-bootstrap/Col":"2L2I6","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"km3Ru"}],"jo6P5":[function(require,module,exports) {
+},{"react/jsx-dev-runtime":"iTorj","react":"21dqq","axios":"jo6P5","react-router-dom":"cHIiW","../movie-card/movie-card.jsx":"bwuIu","../movie-view/movie-view.jsx":"ggaUx","../director-view/director-view.jsx":"9tpci","../login-view/login-view":"9YtA0","../registration-view/registration-view":"3U8r7","react-bootstrap/Row":"cMC39","react-bootstrap/Col":"2L2I6","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"km3Ru"}],"jo6P5":[function(require,module,exports) {
 module.exports = require("./lib/axios");
 
 },{"./lib/axios":"63MyY"}],"63MyY":[function(require,module,exports) {
@@ -38744,7 +38774,106 @@ const Button = /*#__PURE__*/ _react.forwardRef((_ref, ref)=>{
 Button.displayName = "Button";
 exports.default = Button;
 
-},{"react":"21dqq","react/jsx-runtime":"6AEwr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9YtA0":[function(require,module,exports) {
+},{"react":"21dqq","react/jsx-runtime":"6AEwr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9tpci":[function(require,module,exports) {
+var $parcel$ReactRefreshHelpers$ad4a = require("@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js");
+var prevRefreshReg = window.$RefreshReg$;
+var prevRefreshSig = window.$RefreshSig$;
+$parcel$ReactRefreshHelpers$ad4a.prelude(module);
+
+try {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "DirectorView", ()=>DirectorView);
+var _jsxDevRuntime = require("react/jsx-dev-runtime");
+var _react = require("react");
+var _reactDefault = parcelHelpers.interopDefault(_react);
+var _card = require("react-bootstrap/Card");
+var _cardDefault = parcelHelpers.interopDefault(_card);
+var _button = require("react-bootstrap/Button");
+var _buttonDefault = parcelHelpers.interopDefault(_button);
+class DirectorView extends (0, _reactDefault.default).Component {
+    render() {
+        const { movie , onBackClick  } = this.props;
+        return /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _cardDefault.default), {
+            style: {
+                width: "18rem"
+            },
+            children: [
+                /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _cardDefault.default).Img, {
+                    variant: "top",
+                    src: movie.ImagePath
+                }, void 0, false, {
+                    fileName: "src/components/director-view/director-view.jsx",
+                    lineNumber: 11,
+                    columnNumber: 7
+                }, this),
+                /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _cardDefault.default).Body, {
+                    children: [
+                        /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _cardDefault.default).Title, {
+                            children: movie.Director.Name
+                        }, void 0, false, {
+                            fileName: "src/components/director-view/director-view.jsx",
+                            lineNumber: 13,
+                            columnNumber: 8
+                        }, this),
+                        /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _cardDefault.default).Text, {
+                            children: movie.Director.Bio
+                        }, void 0, false, {
+                            fileName: "src/components/director-view/director-view.jsx",
+                            lineNumber: 14,
+                            columnNumber: 11
+                        }, this),
+                        /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)(Link, {
+                            to: `movie/${movie.Title}`,
+                            children: /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _buttonDefault.default), {
+                                variant: "link",
+                                children: "Movie"
+                            }, void 0, false, {
+                                fileName: "src/components/director-view/director-view.jsx",
+                                lineNumber: 16,
+                                columnNumber: 3
+                            }, this)
+                        }, void 0, false, {
+                            fileName: "src/components/director-view/director-view.jsx",
+                            lineNumber: 15,
+                            columnNumber: 11
+                        }, this),
+                        /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)(Link, {
+                            to: `/genres/${movie.Genre.Name}`,
+                            children: /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _buttonDefault.default), {
+                                variant: "link",
+                                children: "Genre"
+                            }, void 0, false, {
+                                fileName: "src/components/director-view/director-view.jsx",
+                                lineNumber: 20,
+                                columnNumber: 3
+                            }, this)
+                        }, void 0, false, {
+                            fileName: "src/components/director-view/director-view.jsx",
+                            lineNumber: 19,
+                            columnNumber: 1
+                        }, this)
+                    ]
+                }, void 0, true, {
+                    fileName: "src/components/director-view/director-view.jsx",
+                    lineNumber: 12,
+                    columnNumber: 9
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "src/components/director-view/director-view.jsx",
+            lineNumber: 10,
+            columnNumber: 7
+        }, this);
+    }
+}
+
+  $parcel$ReactRefreshHelpers$ad4a.postlude(module);
+} finally {
+  window.$RefreshReg$ = prevRefreshReg;
+  window.$RefreshSig$ = prevRefreshSig;
+}
+},{"react/jsx-dev-runtime":"iTorj","react":"21dqq","react-bootstrap/Card":"lAynp","react-bootstrap/Button":"aPzUt","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"km3Ru"}],"9YtA0":[function(require,module,exports) {
 var $parcel$ReactRefreshHelpers$9fee = require("@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js");
 var prevRefreshReg = window.$RefreshReg$;
 var prevRefreshSig = window.$RefreshSig$;
@@ -39905,6 +40034,6 @@ _s(registationView, "Q34jYMrkFxaDBUmjIaVBeTAvlQw=");
   window.$RefreshReg$ = prevRefreshReg;
   window.$RefreshSig$ = prevRefreshSig;
 }
-},{"react/jsx-dev-runtime":"iTorj","react":"21dqq","react-bootstrap":"3AD9A","react-bootstrap/Button":"aPzUt","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"km3Ru"}],"lJZlQ":[function() {},{}]},["1xC6H","6fg2U","d8Dch"], "d8Dch", "parcelRequire746b")
+},{"react/jsx-dev-runtime":"iTorj","react":"21dqq","react-bootstrap":"3AD9A","react-bootstrap/Button":"aPzUt","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"km3Ru"}],"lJZlQ":[function() {},{}]},["1xC6H","jVvJi","d8Dch"], "d8Dch", "parcelRequire746b")
 
 //# sourceMappingURL=index.b4b6dfad.js.map
